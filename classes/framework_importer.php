@@ -64,6 +64,7 @@ class framework_importer {
         $records = array();
         foreach ($elements as $element) {
             $record = new stdClass();
+            $record->shortname = '';
             // Get the idnumber.
             $attr = $element->attributes->getNamedItem('about');
             if (!$attr) {
@@ -95,12 +96,6 @@ class framework_importer {
                 }
             }
 
-            if (empty($record->shortname) && !empty($record->code)) {
-                $record->shortname = $record->code;
-            }
-            if (empty($record->shortname) && !empty($record->description)) {
-                $record->shortname = $record->description;
-            }
             $record->children = array();
             $record->childcount = 0;
             array_push($records, $record);
@@ -167,19 +162,33 @@ class framework_importer {
     public function create_competency($parent, $record, $framework) {
         $competency = new stdClass();
         $competency->competencyframeworkid = $framework->get_id();
+        $competency->shortname = trim(clean_param(shorten_text($record->shortname, 50), PARAM_TEXT));
+        if (!empty($record->description)) {
+            $competency->description = trim(clean_param($record->description, PARAM_TEXT));
+        }
         if ($parent) {
             $competency->parentid = $parent->get_id();
+            if (empty($competency->shortname)) {
+                if (!empty($competency->description)) {
+                    $competency->shortname = shorten_text($competency->description, 50);
+                } else {
+                    $competency->shortname = $parent->get_shortname();
+                }
+            }
         } else {
             $competency->parentid = 0;
+            if (empty($competency->shortname)) {
+                if (!empty($competency->description)) {
+                    $competency->shortname = shorten_text($competency->description, 50);
+                } else {
+                    $competency->shortname = $framework->get_shortname();
+                }
+            }
         }
         if (!empty($record->code)) {
             $competency->idnumber = trim(clean_param($record->code, PARAM_TEXT));
         } else {
             $competency->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
-        }
-        $competency->shortname = trim(clean_param(shorten_text($record->shortname, 50), PARAM_TEXT));
-        if (!empty($record->description)) {
-            $competency->description = trim(clean_param($record->description, PARAM_TEXT));
         }
 
         if (!empty($competency->idnumber) && !empty($competency->shortname)) {
