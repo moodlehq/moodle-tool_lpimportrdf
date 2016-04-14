@@ -27,7 +27,7 @@ namespace tool_lpimportau\form;
 defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
 use moodleform;
-use tool_lp\api;
+use core_competency\api;
 
 require_once($CFG->libdir.'/formslib.php');
 

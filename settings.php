@@ -30,9 +30,9 @@ $temp = new admin_externalpage(
     'toollpimportau',
     get_string('pluginname', 'tool_lpimportau'),
     new moodle_url('/admin/tool/lpimportau/index.php'),
-    'tool/lp:competencymanage'
+    'moodle/competency:competencymanage'
 );
-$ADMIN->add('root', $temp, 'badges');
+$ADMIN->add('competencies', $temp);
 
 // No report settings.
 $settings = null;
