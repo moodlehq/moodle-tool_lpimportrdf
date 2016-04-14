@@ -26,7 +26,7 @@ namespace tool_lpimportau;
 
 defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
-use tool_lp\api;
+use core_competency\api;
 use DOMDocument;
 use stdClass;
 
@@ -200,8 +200,8 @@ class framework_importer {
                 $this->create_competency($parent, $child, $framework);
             }
             if (!empty($record->iscompetency) && !empty($record->children)) {
-                $parent->set_ruletype('tool_lp\competency_rule_all');
-                $parent->set_ruleoutcome(\tool_lp\competency::OUTCOME_EVIDENCE);
+                $parent->set_ruletype('core_competency\competency_rule_all');
+                $parent->set_ruleoutcome(\core_competency\competency::OUTCOME_EVIDENCE);
                 $parent->update();
             }
 

@@ -51,14 +51,14 @@ if ($data = $form->get_data()) {
 
         unset($data->importfile);
 
-        $framework = \tool_lp\api::create_framework($data);
+        $framework = \core_competency\api::create_framework($data);
 
         if ($framework) {
             $importer->import_to_framework($framework);
             redirect(new moodle_url('continue.php', array('id' => $framework->get_id())));
             die();
         } else {
-            $form->set_import_error(get_string('invalidpersistent', 'tool_lp'));
+            $form->set_import_error(get_string('invalidpersistent', 'core_competency'));
         }
     }
 }
