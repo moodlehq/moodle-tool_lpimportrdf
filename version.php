@@ -17,7 +17,7 @@
 /**
  * Plugin version info
  *
- * @package    tool_lp
+ * @package    tool_lpimportrdf
  * @copyright  2015 Damyon Wiese
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -27,6 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2015052416; // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2014110400; // Requires this Moodle version.
-$plugin->component = 'tool_lpimportau'; // Full name of the plugin (used for diagnostics).
+$plugin->component = 'tool_lpimportrdf'; // Full name of the plugin (used for diagnostics).
 $plugin->dependencies = array('tool_lp' => 2015052416);
 

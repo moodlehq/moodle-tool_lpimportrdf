@@ -17,12 +17,12 @@
 /**
  * This file contains the form add/update a competency framework.
  *
- * @package   tool_lpimportau
+ * @package   tool_lpimportrdf
  * @copyright 2015 Damyon Wiese
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_lpimportau;
+namespace tool_lpimportrdf;
 
 defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
@@ -33,7 +33,7 @@ use stdClass;
 /**
  * Import Competency framework form.
  *
- * @package   tool_lp
+ * @package   tool_lpimportrdf
  * @copyright 2015 Damyon Wiese
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -56,11 +56,12 @@ class framework_importer {
     public function __construct($xml) {
         $doc = new DOMDocument();
         if (!@$doc->loadXML($xml)) {
-            $this->fail(get_string('invalidimportfile', 'tool_lpimportau'));
+            $this->fail(get_string('invalidimportfile', 'tool_lpimportrdf'));
             return;
         }
+        $elements = $doc->getElementsByTagName('StandardDocument');
 
-        $elements = $doc->getElementsByTagName('Description');
+        $elements += $doc->getElementsByTagName('Statement');
         $records = array();
         foreach ($elements as $element) {
             $record = new stdClass();
@@ -68,7 +69,7 @@ class framework_importer {
             // Get the idnumber.
             $attr = $element->attributes->getNamedItem('about');
             if (!$attr) {
-                $this->fail(get_string('invalidimportfile', 'tool_lpimportau'));
+                $this->fail(get_string('invalidimportfile', 'tool_lpimportrdf'));
                 return;
             }
             $parts = explode('/', $attr->nodeValue);
@@ -78,19 +79,17 @@ class framework_importer {
             // Get the shortname and description.
             foreach ($element->childNodes as $child) {
                 if ($child->localName == 'description') {
-                    $record->description = $child->nodeValue;
+                    $record->description = s($child->nodeValue);
                 } else if ($child->localName == 'title') {
-                    $record->shortname = $child->nodeValue;
-                } else if ($child->localName == 'statementNotation') {
-                    $record->code = $child->nodeValue;
-                } else if ($child->localName == 'statementLabel') {
-                    if ($child->nodeValue == 'Content description' || $child->nodeValue == 'Elaboration') {
-                        $record->iscompetency = true;
-                    }
+                    $record->shortname = s($child->nodeValue);
+                } else if ($child->localName == 'listID') {
+                    $record->code = s($child->nodeValue);
+                } else if ($child->localName == 'source') {
+                    $record->source = s($child->nodeValue);
                 } else if ($child->localName == 'isChildOf') {
                     $attr = $child->attributes->getNamedItem('resource');
                     if ($attr) {
-                        $parts = explode('/', $attr->nodeValue);
+                        $parts = explode('/', s($attr->nodeValue));
                         array_push($record->parents, array_pop($parts));
                     }
                 }
@@ -162,7 +161,8 @@ class framework_importer {
     public function create_competency($parent, $record, $framework) {
         $competency = new stdClass();
         $competency->competencyframeworkid = $framework->get_id();
-        $competency->shortname = trim(clean_param(shorten_text($record->shortname, 50), PARAM_TEXT));
+        $competency->shortname = trim(clean_param(shorten_text($record->shortname, 80), PARAM_TEXT));
+        $competency->description = '';
         if (!empty($record->description)) {
             $competency->description = trim(clean_param($record->description, PARAM_TEXT));
         }
@@ -185,6 +185,9 @@ class framework_importer {
                 }
             }
         }
+        if (!empty($record->source)) {
+            $competency->description .= '<br/>' . get_string('source', 'tool_lpimportrdf', $record->source);
+        }
         if (!empty($record->code)) {
             $competency->idnumber = trim(clean_param($record->code, PARAM_TEXT));
         } else {
@@ -198,11 +201,6 @@ class framework_importer {
 
             foreach ($record->children as $child) {
                 $this->create_competency($parent, $child, $framework);
-            }
-            if (!empty($record->iscompetency) && !empty($record->children)) {
-                $parent->set_ruletype('core_competency\competency_rule_all');
-                $parent->set_ruleoutcome(\core_competency\competency::OUTCOME_EVIDENCE);
-                $parent->update();
             }
 
         }
@@ -221,7 +219,7 @@ class framework_importer {
     }
 
     /**
-     * @param \tool_lp\competency_framework
+     * @param \competency\competency_framework
      * @return boolean
      */
     public function import_to_framework($framework) {

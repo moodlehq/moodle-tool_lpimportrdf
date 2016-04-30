@@ -15,22 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Page to edit a plan.
+ * Framework imported - redirect to the new framework.
  *
- * @package    tool_lp
- * @copyright  2015 David Monllao
+ * @package    tool_lpimportrdf
+ * @copyright  2016 Damyon Wiese
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 
-$pagetitle = get_string('pluginname', 'tool_lpimportau');
+$pagetitle = get_string('pluginname', 'tool_lpimportrdf');
 
 $context = context_system::instance();
 
 $id = required_param('id', PARAM_INT);
-$url = new moodle_url("/admin/tool/lpimportau/index.php");
+$url = new moodle_url("/admin/tool/lpimportrdf/index.php");
 $PAGE->set_context($context);
 $PAGE->set_url($url);
 $PAGE->set_title($pagetitle);

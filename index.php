@@ -17,8 +17,8 @@
 /**
  * Page to edit a plan.
  *
- * @package    tool_lp
- * @copyright  2015 David Monllao
+ * @package    tool_lpimportrdf
+ * @copyright  2015 Damyon Wiese
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

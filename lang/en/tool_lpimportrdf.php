@@ -17,11 +17,11 @@
 /**
  * Strings for component 'tool_lpimportau', language 'en'
  *
- * @package    tool_lp
+ * @package    tool_lpimportrdf
  * @copyright  2015 Damyon Wiese
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Import Australian Curriculum';
+$string['pluginname'] = 'Import Curriculum from RDF/XML';
 $string['importfile'] = 'RDF/XML format framework description file';
 $string['invalidimportfile'] = 'File format is invalid.';

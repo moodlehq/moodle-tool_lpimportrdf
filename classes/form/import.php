@@ -17,12 +17,12 @@
 /**
  * This file contains the form add/update a competency framework.
  *
- * @package   tool_lpimportau
+ * @package   tool_lpimportrdf
  * @copyright 2015 Damyon Wiese
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_lpimportau\form;
+namespace tool_lpimportrdf\form;
 
 defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
@@ -45,7 +45,7 @@ class import extends \tool_lp\form\competency_framework {
      */
     public function definition_after_data() {
         $mform = $this->_form;
-        $element = $mform->createElement('filepicker', 'importfile', get_string('importfile', 'tool_lpimportau'));
+        $element = $mform->createElement('filepicker', 'importfile', get_string('importfile', 'tool_lpimportrdf'));
         $mform->insertElementBefore($element, 'idnumber');
         $mform->addRule('importfile', null, 'required');
     }

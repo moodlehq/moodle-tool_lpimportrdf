@@ -17,9 +17,9 @@
 /**
  * Links and settings
  *
- * This file contains links and settings used by tool_lpimportau
+ * This file contains links and settings used by tool_lpimportrdf
  *
- * @package    tool_lp
+ * @package    tool_lpimportrdf
  * @copyright  2015 Damyon Wiese
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -27,9 +27,9 @@ defined('MOODLE_INTERNAL') || die;
 
 // Manage competency frameworks page.
 $temp = new admin_externalpage(
-    'toollpimportau',
-    get_string('pluginname', 'tool_lpimportau'),
-    new moodle_url('/admin/tool/lpimportau/index.php'),
+    'toollpimportrdf',
+    get_string('pluginname', 'tool_lpimportrdf'),
+    new moodle_url('/admin/tool/lpimportrdf/index.php'),
     'moodle/competency:competencymanage'
 );
 $ADMIN->add('competencies', $temp);
