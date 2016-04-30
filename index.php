@@ -25,24 +25,24 @@
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 
-$pagetitle = get_string('pluginname', 'tool_lpimportau');
+$pagetitle = get_string('pluginname', 'tool_lpimportrdf');
 
 $context = context_system::instance();
 
-$url = new moodle_url("/admin/tool/lpimportau/index.php");
+$url = new moodle_url("/admin/tool/lpimportrdf/index.php");
 $PAGE->set_context($context);
 $PAGE->set_url($url);
 $PAGE->set_title($pagetitle);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_heading($pagetitle);
 
-$form = new \tool_lpimportau\form\import($url->out(false), array('persistent' => null, 'context' => $context));
+$form = new \tool_lpimportrdf\form\import($url->out(false), array('persistent' => null, 'context' => $context));
 
 if ($data = $form->get_data()) {
     require_sesskey();
 
     $xml = $form->get_file_content('importfile');
-    $importer = new \tool_lpimportau\framework_importer($xml);
+    $importer = new \tool_lpimportrdf\framework_importer($xml);
 
     $error = $importer->get_error();
     if ($error) {
