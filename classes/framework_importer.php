@@ -237,6 +237,24 @@ class framework_importer {
         return $children;
     }
 
+    /**
+     * Apply some heuristics to get the best possible idnumber, shortname and description.
+     *
+     * The heuristics are:
+     * 1. Clean all params and use shorten_text where needed to stay inside the max length of each field.
+     * 2. If the original record had a statementNotation field - this is the most human readable idnumber - use it for both
+     *    the idnumber and shortname
+     * 3. If the record had a title - use it for the shortname.
+     * 4. If the record has children and a short description - use the description for the shortname.
+     * 5. Append the subject and educationLevel to the description.
+     * 6. If we still don't have a shortname and the idnumber is short (< 16) use it.
+     * 7. If we still don't have a shortname and the description is short use it.
+     * 8. If we still don't have a shortname just call it "Competency".
+     *
+     * @param $record The record from the xml file
+     * @param $framework - The created framework 
+     * @return none - the $record is modified in place
+     */
     public function sanitise_competency($record, $framework) {
         $record->shortname = trim(clean_param(shorten_text($record->shortname, 80), PARAM_TEXT));
         if (!empty($record->description)) {
