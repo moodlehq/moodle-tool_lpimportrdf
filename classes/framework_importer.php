@@ -210,50 +210,67 @@ class framework_importer {
         return $this->error;
     }
 
+    public static function compare_nodes($nodea, $nodeb) {
+        $cmp = strcmp($nodea->shortname, $nodeb->shortname);
+        if (!$cmp) {
+            $cmp = strcmp($nodea->idnumber, $nodeb->idnumber);
+        }
+        return $cmp;
+    }
+
+    private function sort_children($children) {
+        usort($children, "\\tool_lpimportrdf\\framework_importer::compare_nodes");
+        return $children;
+    }
+
+    public function sanitise_competency($record, $framework) {
+        $record->shortname = trim(clean_param(shorten_text($record->shortname, 80), PARAM_TEXT));
+        if (!empty($record->description)) {
+            $record->description = trim(clean_param($record->description, PARAM_TEXT));
+        }
+        if (empty($record->shortname)) {
+            if (!empty($record->description)) {
+                $record->shortname = shorten_text($record->description, 50);
+            } else {
+                $record->shortname = $framework->get_shortname();
+            }
+        }
+        if (!empty($record->code)) {
+            $record->description = trim(clean_param($record->code, PARAM_TEXT)) . ' ' . $record->description;
+        } else {
+            $record->shortname = trim(clean_param(shorten_text($record->description, 80), PARAM_TEXT));
+        }
+        if (!empty($record->educationLevel)) {
+            $record->description .= '<br/>' . get_string('educationlevel', 'tool_lpimportrdf', $record->educationLevel);
+        }
+        if (!empty($record->subject)) {
+            $record->description .= '<br/>' . get_string('subject', 'tool_lpimportrdf', $record->subject);
+        }
+        $record->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
+
+        foreach ($record->children as $child) {
+            $this->sanitise_competency($child, $framework);
+        }
+    }
+
     public function create_competency($parent, $record, $framework) {
         $competency = new stdClass();
         $competency->competencyframeworkid = $framework->get_id();
-        $competency->shortname = trim(clean_param(shorten_text($record->shortname, 80), PARAM_TEXT));
-        $competency->description = '';
-        if (!empty($record->description)) {
-            $competency->description = trim(clean_param($record->description, PARAM_TEXT));
-        }
+        $competency->shortname = $record->shortname;
+        $competency->description = $record->description;
+        $competency->idnumber = $record->idnumber;
         if ($parent) {
             $competency->parentid = $parent->get_id();
-            if (empty($competency->shortname)) {
-                if (!empty($competency->description)) {
-                    $competency->shortname = shorten_text($competency->description, 50);
-                } else {
-                    $competency->shortname = $parent->get_shortname();
-                }
-            }
         } else {
             $competency->parentid = 0;
-            if (empty($competency->shortname)) {
-                if (!empty($competency->description)) {
-                    $competency->shortname = shorten_text($competency->description, 50);
-                } else {
-                    $competency->shortname = $framework->get_shortname();
-                }
-            }
         }
-        if (!empty($record->educationLevel)) {
-            $competency->description .= '<br/>' . get_string('educationlevel', 'tool_lpimportrdf', $record->educationLevel);
-        }
-        if (!empty($record->subject)) {
-            $competency->description .= '<br/>' . get_string('subject', 'tool_lpimportrdf', $record->subject);
-        }
-        if (!empty($record->code)) {
-            $competency->description = trim(clean_param($record->code, PARAM_TEXT)) . ' ' . $competency->description;
-        } else {
-            $competency->shortname = trim(clean_param(shorten_text($record->description, 80), PARAM_TEXT));
-        }
-        $competency->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
 
         if (!empty($competency->idnumber) && !empty($competency->shortname)) {
             $parent = api::create_competency($competency);
 
             $record->id = $parent->get_id();
+
+            $record->children = $this->sort_children($record->children);
 
             foreach ($record->children as $child) {
                 $this->create_competency($parent, $child, $framework);
@@ -315,18 +332,17 @@ class framework_importer {
         }
 
         foreach ($this->tree as $record) {
+            $this->sanitise_competency($record, $framework);
+        }
+        $this->tree = $this->sort_children($this->tree);
+        foreach ($this->tree as $record) {
             $this->create_competency(null, $record, $framework);
         }
+        // Not used right now.
         foreach ($this->tree as $record) {
             $this->set_related_competencies($record);
         }
-        return true;
+        return $framework;
     }
 
-    /**
-     * @param \competency\competency_framework
-     * @return boolean
-     */
-    public function import_to_framework($framework) {
-    }
 }

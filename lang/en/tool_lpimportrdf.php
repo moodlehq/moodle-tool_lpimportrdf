@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Import Curriculum from RDF/XML';
+$string['pluginname'] = 'Import competency framework from RDF';
 $string['importfile'] = 'RDF/XML format framework description file';
 $string['invalidimportfile'] = 'File format is invalid.';
 $string['subject'] = 'Subject: {$a}';
