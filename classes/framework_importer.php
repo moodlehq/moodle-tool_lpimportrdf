@@ -26,7 +26,9 @@ namespace tool_lpimportrdf;
 
 defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
+use context_system;
 use core_competency\api;
+use core_competency\invalid_persistent_exception;
 use DOMDocument;
 use stdClass;
 
@@ -45,6 +47,9 @@ class framework_importer {
     /** @var array $tree The competencies tree */
     var $tree = array();
 
+    /** @var stdClass The framework node */
+    var $framework = null;
+
     public function fail($msg) {
         $this->error = $msg;
         return false;
@@ -59,6 +64,42 @@ class framework_importer {
             $this->fail(get_string('invalidimportfile', 'tool_lpimportrdf'));
             return;
         }
+
+        $this->framework = new stdClass();
+
+        $elements = $doc->getElementsByTagName('StandardDocument');
+        foreach ($elements as $element) {
+            // Get the idnumber.
+            $attr = $element->attributes->getNamedItem('about');
+            if (!$attr) {
+                $this->fail(get_string('invalidimportfile', 'tool_lpimportrdf'));
+                return;
+            }
+            $parts = explode('/', $attr->nodeValue);
+            $this->framework->idnumber = array_pop($parts);
+            $this->framework->shortname = $this->framework->idnumber;
+            
+            foreach ($element->childNodes as $child) {
+                if ($child->localName == 'description') {
+                    $this->framework->description = $child->nodeValue;
+                } else if ($child->localName == 'title') {
+                    $this->framework->shortname = $child->nodeValue;
+                } else if ($child->localName == 'subject') {
+                    // Get the resource attribute.
+                    $attr = $child->attributes->getNamedItem('resource');
+                    if ($attr) {
+                        $parts = explode('/', $attr->nodeValue);
+                        $this->framework->subject = array_pop($parts);
+                    }
+                }
+            }
+            break;
+        }
+
+        if ($this->framework->subject) {
+            $this->framework->description .= '<br/>' . get_string('subject', 'tool_lpimportrdf', $this->framework->subject);
+        }
+
         $elements = $doc->getElementsByTagName('Statement');
         $records = array();
         foreach ($elements as $element) {
@@ -233,11 +274,46 @@ class framework_importer {
         }
     }
 
+    private function create_framework($scaleid, $scaleconfiguration, $visible) {
+        $framework = false;
+
+        $record = new stdClass();
+        $record->shortname = $this->framework->shortname;
+        $record->idnumber = $this->framework->idnumber;
+        $record->description = $this->framework->description;
+        $record->descriptionformat = FORMAT_HTML;
+        $record->scaleid = $scaleid;
+        $record->scaleconfiguration = $scaleconfiguration;
+        $record->visible = $visible;
+        $record->contextid = context_system::instance()->id;
+
+        $taxdefaults = array();
+        $taxcount = 4;
+        for ($i = 1; $i <= $taxcount; $i++) {
+            $taxdefaults[$i] = \core_competency\competency_framework::TAXONOMY_COMPETENCY;
+        }
+        $record->taxonomies = $taxdefaults;
+
+        try {
+            $framework = api::create_framework($record);
+        } catch (invalid_persistent_exception $ip) {
+            return $this->fail($ip->getDescription());
+        }
+        
+        return $framework;
+    }
+
     /**
-     * @param \competency\competency_framework
+     * @param \stdClass containing scaleconfig
      * @return boolean
      */
-    public function import_to_framework($framework) {
+    public function import($data) {
+
+        $framework = $this->create_framework($data->scaleid, $data->scaleconfiguration, $data->visible);
+        if (!$framework) {
+            return false;
+        }
+
         foreach ($this->tree as $record) {
             $this->create_competency(null, $record, $framework);
         }
@@ -245,5 +321,12 @@ class framework_importer {
             $this->set_related_competencies($record);
         }
         return true;
+    }
+
+    /**
+     * @param \competency\competency_framework
+     * @return boolean
+     */
+    public function import_to_framework($framework) {
     }
 }

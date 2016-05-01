@@ -38,29 +38,59 @@ require_once($CFG->libdir.'/formslib.php');
  * @copyright 2015 Damyon Wiese
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class import extends \tool_lp\form\competency_framework {
+class import extends moodleform {
 
     /**
      * Define the form - called by parent constructor
      */
-    public function definition_after_data() {
+    public function definition() {
+        global $PAGE;
+
         $mform = $this->_form;
         $element = $mform->createElement('filepicker', 'importfile', get_string('importfile', 'tool_lpimportrdf'));
-        $mform->insertElementBefore($element, 'idnumber');
+        $mform->addElement($element);
         $mform->addRule('importfile', null, 'required');
-    }
 
-    public function get_submitted_data() {
-        // The field importfile mucks up the default validation from the parent form.
-        $data = parent::get_submitted_data();
-        unset($data->importfile);
-        return $data;
+        $scales = get_scales_menu();
+        $scaleid = $mform->addElement('select', 'scaleid', get_string('scale', 'tool_lp'), $scales);
+        $mform->setType('scaleid', PARAM_INT);
+        $mform->addHelpButton('scaleid', 'scale', 'tool_lp');
+        $mform->addRule('scaleid', null, 'required', null, 'client');
+        $mform->addElement('button', 'scaleconfigbutton', get_string('configurescale', 'tool_lp'));
+        // Add js.
+        $mform->addElement('hidden', 'scaleconfiguration', '', array('id' => 'tool_lp_scaleconfiguration'));
+        $mform->setType('scaleconfiguration', PARAM_RAW);
+        $PAGE->requires->js_call_amd('tool_lp/scaleconfig', 'init', array('#id_scaleid',
+            '#tool_lp_scaleconfiguration', '#id_scaleconfigbutton'));
+
+        $mform->addElement('selectyesno', 'visible',
+                           get_string('visible', 'tool_lp'));
+        $mform->setDefault('visible', true);
+        $mform->addHelpButton('visible', 'visible', 'tool_lp');
+        $this->add_action_buttons(false, get_string('import', 'tool_lpimportrdf'));
     }
 
     public function set_import_error($msg) {
         $mform = $this->_form;
 
         $mform->setElementError('importfile', $msg);
+    }
+
+    /**
+     * Extra validation.
+     *
+     * @param  stdClass $data Data to validate.
+     * @param  array $files Array of files.
+     * @param  array $errors Currently reported errors.
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        // Move the error from scaleconfiguration to the form element scale ID.
+        if (isset($errors['scaleconfiguration']) && !isset($errors['scaleid'])) {
+            $errors['scaleid'] = $errors['scaleconfiguration'];
+            unset($errors['scaleconfiguration']);
+        }
+        return $errors;
     }
 
 }

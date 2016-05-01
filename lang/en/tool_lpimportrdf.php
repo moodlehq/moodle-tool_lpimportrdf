@@ -27,3 +27,4 @@ $string['importfile'] = 'RDF/XML format framework description file';
 $string['invalidimportfile'] = 'File format is invalid.';
 $string['subject'] = 'Subject: {$a}';
 $string['educationlevel'] = 'Education Level: {$a}';
+$string['import'] = 'Import';
