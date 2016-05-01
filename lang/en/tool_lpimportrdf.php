@@ -25,3 +25,5 @@
 $string['pluginname'] = 'Import Curriculum from RDF/XML';
 $string['importfile'] = 'RDF/XML format framework description file';
 $string['invalidimportfile'] = 'File format is invalid.';
+$string['subject'] = 'Subject: {$a}';
+$string['educationlevel'] = 'Education Level: {$a}';

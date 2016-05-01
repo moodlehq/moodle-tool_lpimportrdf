@@ -59,9 +59,7 @@ class framework_importer {
             $this->fail(get_string('invalidimportfile', 'tool_lpimportrdf'));
             return;
         }
-        $elements = $doc->getElementsByTagName('StandardDocument');
-
-        $elements += $doc->getElementsByTagName('Statement');
+        $elements = $doc->getElementsByTagName('Statement');
         $records = array();
         foreach ($elements as $element) {
             $record = new stdClass();
@@ -74,22 +72,35 @@ class framework_importer {
             }
             $parts = explode('/', $attr->nodeValue);
             $record->idnumber = array_pop($parts);
+            $record->shortname = $record->idnumber;
             $record->parents = array();
 
             // Get the shortname and description.
             foreach ($element->childNodes as $child) {
                 if ($child->localName == 'description') {
-                    $record->description = s($child->nodeValue);
+                    $record->description = $child->nodeValue;
                 } else if ($child->localName == 'title') {
-                    $record->shortname = s($child->nodeValue);
+                    $record->shortname = $child->nodeValue;
                 } else if ($child->localName == 'listID') {
-                    $record->code = s($child->nodeValue);
-                } else if ($child->localName == 'source') {
-                    $record->source = s($child->nodeValue);
+                    $record->code = $child->nodeValue;
+                } else if ($child->localName == 'educationLevel') {
+                    // Get the resource attribute.
+                    $attr = $child->attributes->getNamedItem('resource');
+                    if ($attr) {
+                        $parts = explode('/', $attr->nodeValue);
+                        $record->educationLevel = array_pop($parts);
+                    }
+                } else if ($child->localName == 'subject') {
+                    // Get the resource attribute.
+                    $attr = $child->attributes->getNamedItem('resource');
+                    if ($attr) {
+                        $parts = explode('/', $attr->nodeValue);
+                        $record->subject = array_pop($parts);
+                    }
                 } else if ($child->localName == 'isChildOf') {
                     $attr = $child->attributes->getNamedItem('resource');
                     if ($attr) {
-                        $parts = explode('/', s($attr->nodeValue));
+                        $parts = explode('/', $attr->nodeValue);
                         array_push($record->parents, array_pop($parts));
                     }
                 }
@@ -185,14 +196,18 @@ class framework_importer {
                 }
             }
         }
-        if (!empty($record->source)) {
-            $competency->description .= '<br/>' . get_string('source', 'tool_lpimportrdf', $record->source);
+        if (!empty($record->educationLevel)) {
+            $competency->description .= '<br/>' . get_string('educationlevel', 'tool_lpimportrdf', $record->educationLevel);
+        }
+        if (!empty($record->subject)) {
+            $competency->description .= '<br/>' . get_string('subject', 'tool_lpimportrdf', $record->subject);
         }
         if (!empty($record->code)) {
-            $competency->idnumber = trim(clean_param($record->code, PARAM_TEXT));
+            $competency->description = trim(clean_param($record->code, PARAM_TEXT)) . ' ' . $competency->description;
         } else {
-            $competency->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
+            $competency->shortname = trim(clean_param(shorten_text($record->description, 80), PARAM_TEXT));
         }
+        $competency->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
 
         if (!empty($competency->idnumber) && !empty($competency->shortname)) {
             $parent = api::create_competency($competency);
