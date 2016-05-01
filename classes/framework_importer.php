@@ -66,6 +66,11 @@ class framework_importer {
         }
 
         $this->framework = new stdClass();
+        $this->framework->shortname = get_string('unnamed', 'tool_lpimportrdf');
+        $this->framework->idnumber = generate_uuid();
+        $this->framework->description = '';
+        $this->framework->subject = '';
+        $this->framework->educationLevel = '';
 
         $elements = $doc->getElementsByTagName('StandardDocument');
         foreach ($elements as $element) {
@@ -100,9 +105,17 @@ class framework_importer {
             $this->framework->description .= '<br/>' . get_string('subject', 'tool_lpimportrdf', $this->framework->subject);
         }
 
+        $nodes = array();
         $elements = $doc->getElementsByTagName('Statement');
-        $records = array();
         foreach ($elements as $element) {
+            $nodes[] = $element;
+        }
+        $elements = $doc->getElementsByTagName('Description');
+        foreach ($elements as $element) {
+            $nodes[] = $element;
+        }
+        $records = array();
+        foreach ($nodes as $element) {
             $record = new stdClass();
             $record->shortname = '';
             // Get the idnumber.
@@ -113,7 +126,8 @@ class framework_importer {
             }
             $parts = explode('/', $attr->nodeValue);
             $record->idnumber = array_pop($parts);
-            $record->shortname = $record->idnumber;
+            $record->shortname = '';
+            $record->description = '';
             $record->parents = array();
 
             // Get the shortname and description.
@@ -122,6 +136,8 @@ class framework_importer {
                     $record->description = $child->nodeValue;
                 } else if ($child->localName == 'title') {
                     $record->shortname = $child->nodeValue;
+                } else if ($child->localName == 'statementNotation') {
+                    $record->betteridnumber = $child->nodeValue;
                 } else if ($child->localName == 'educationLevel') {
                     // Get the resource attribute.
                     $attr = $child->attributes->getNamedItem('resource');
@@ -226,16 +242,15 @@ class framework_importer {
         if (!empty($record->description)) {
             $record->description = trim(clean_param($record->description, PARAM_TEXT));
         }
-        if (empty($record->shortname)) {
-            if (!empty($record->description)) {
-                $record->shortname = shorten_text($record->description, 50);
-            } else {
-                $record->shortname = $framework->get_shortname();
-            }
+        if (!empty($record->betteridnumber)) {
+            $record->idnumber = trim(clean_param($record->betteridnumber, PARAM_TEXT));
+            $record->shortname = $record->idnumber;
+        } else {
+            $record->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
         }
 
         $shortdesc = trim(clean_param(shorten_text($record->description, 80), PARAM_TEXT));
-        if (!empty($record->children) && $shortdesc == $record->description) {
+        if (!empty($record->children) && $shortdesc == $record->description && empty($record->shortname)) {
             $record->shortname = $shortdesc;
         }
         if (!empty($record->educationLevel)) {
@@ -244,7 +259,15 @@ class framework_importer {
         if (!empty($record->subject)) {
             $record->description .= '<br/>' . get_string('subject', 'tool_lpimportrdf', $record->subject);
         }
-        $record->idnumber = trim(clean_param($record->idnumber, PARAM_TEXT));
+        if (empty($record->shortname)) {
+            if (!empty($record->idnumber) && (strlen($record->idnumber) < 16)) {
+                $record->shortname = $record->idnumber;
+            } else if (!empty($shortdesc)) {
+                $record->shortname = $shortdesc;
+            } else {
+                $record->shortname = get_string('competency', 'tool_lpimportrdf');
+            }
+        }
 
         foreach ($record->children as $child) {
             $this->sanitise_competency($child, $framework);
@@ -280,7 +303,9 @@ class framework_importer {
     public function set_related_competencies($record) {
         if (!empty($record->related)) {
             foreach ($record->related as $related) {
-                api::add_related_competency($record->id, $related->id);
+                if (!empty($record->id) && !empty($related->id)) {
+                    api::add_related_competency($record->id, $related->id);
+                }
             }
         }
 
@@ -312,7 +337,7 @@ class framework_importer {
         try {
             $framework = api::create_framework($record);
         } catch (invalid_persistent_exception $ip) {
-            return $this->fail($ip->getDescription());
+            return $this->fail($ip->getMessage());
         }
         
         return $framework;

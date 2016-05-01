@@ -28,3 +28,5 @@ $string['invalidimportfile'] = 'File format is invalid.';
 $string['subject'] = 'Subject: {$a}';
 $string['educationlevel'] = 'Education Level: {$a}';
 $string['import'] = 'Import';
+$string['unnamed'] = 'Unnamed';
+$string['competency'] = 'Competency';
