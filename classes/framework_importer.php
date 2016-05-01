@@ -122,8 +122,6 @@ class framework_importer {
                     $record->description = $child->nodeValue;
                 } else if ($child->localName == 'title') {
                     $record->shortname = $child->nodeValue;
-                } else if ($child->localName == 'listID') {
-                    $record->code = $child->nodeValue;
                 } else if ($child->localName == 'educationLevel') {
                     // Get the resource attribute.
                     $attr = $child->attributes->getNamedItem('resource');
@@ -235,10 +233,10 @@ class framework_importer {
                 $record->shortname = $framework->get_shortname();
             }
         }
-        if (!empty($record->code)) {
-            $record->description = trim(clean_param($record->code, PARAM_TEXT)) . ' ' . $record->description;
-        } else {
-            $record->shortname = trim(clean_param(shorten_text($record->description, 80), PARAM_TEXT));
+
+        $shortdesc = trim(clean_param(shorten_text($record->description, 80), PARAM_TEXT));
+        if (!empty($record->children) && $shortdesc == $record->description) {
+            $record->shortname = $shortdesc;
         }
         if (!empty($record->educationLevel)) {
             $record->description .= '<br/>' . get_string('educationlevel', 'tool_lpimportrdf', $record->educationLevel);
