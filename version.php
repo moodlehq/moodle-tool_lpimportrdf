@@ -29,4 +29,7 @@ $plugin->version   = 2015052416; // The current plugin version (Date: YYYYMMDDXX
 $plugin->requires  = 2014110400; // Requires this Moodle version.
 $plugin->component = 'tool_lpimportrdf'; // Full name of the plugin (used for diagnostics).
 $plugin->dependencies = array('tool_lp' => 2015052416);
+$plugin->maturity = MATURITY_STABLE;
+$plugin->release = '1.0';
+
 
