@@ -56,7 +56,7 @@ if ($data = $form->get_data()) {
         if ($error) {
             $form->set_import_error($error);
         } else {
-            redirect(new moodle_url('continue.php', array('id' => $framework->get_id())));
+            redirect(new moodle_url('continue.php', array('id' => $framework->get('id'))));
             die();
         }
     }
